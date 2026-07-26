@@ -1,19 +1,97 @@
-# Nodal Analysis Simulator (Oil Wells)
+# IPR–VLP Nodal Analysis
 
-This is a small project I built to understand nodal analysis for a flowing oil well — basically finding the point where the reservoir's inflow (IPR) and the wellbore/tubing's outflow (VLP) meet, and then playing around with that point by changing skin and tubing size.
+This project is a Python implementation of **nodal analysis** for an oil well. The goal is to estimate the well's operating point by combining the **Inflow Performance Relationship (IPR)** and **Vertical Lift Performance (VLP)** curves.
 
-I'm a 2nd year Petroleum Engineering student, still fairly new to Python, so the code is not the cleanest and there's probably a more efficient way to do half of this. But everything here is something I actually worked through and can explain — Vogel's equation, Poettmann-Carpenter, spline fitting to get a smooth intersection, the works.
+The project was built to better understand how reservoir performance and tubing performance work together to determine the actual production rate of a well.
 
-## What it actually does
 
-1. Builds the **Inflow Performance Relationship (IPR)** curve using Vogel's correlation (handles both saturated and undersaturated cases depending on where Pb sits relative to Pr).
-2. Builds the **Vertical Lift Performance (VLP)** curve using the Poettmann-Carpenter multiphase flow correlation, marching pressure down the tubing from wellhead to bottomhole in small steps.
-3. Fits both curves with cubic splines (`scipy.interpolate.splrep/splev`) so they're smooth enough to actually find where they cross.
-4. Uses `fsolve` to solve for the intersection — that intersection point is the well's actual operating point (Qo, Pwf).
-5. On top of that base case, I added a couple of sensitivity studies:
-   - what happens to the operating point if skin is reduced (stimulation effect)
-   - what happens if you change the tubing ID
-   - a small loop that sweeps through a list of standard tubing sizes and picks the "optimum" one (the biggest tubing size before the rate gain flattens out below a threshold)
+## Project Overview
+
+A producing well is controlled by two systems:
+
+* The **reservoir**, which delivers fluid into the wellbore.
+* The **tubing**, which carries the produced fluid to the surface.
+
+The reservoir can only supply a certain flow rate for a given bottomhole pressure, while the tubing requires a certain pressure to lift that flow to the surface. The point where these two conditions match is the well's operating point.
+
+This project generates both curves, finds their intersection numerically, and studies how different operating conditions affect production.
+
+
+## IPR Model
+
+The IPR curve is generated using the **Vogel correlation**.
+
+The implementation considers both saturated and undersaturated reservoir conditions:
+
+* For saturated reservoirs, the Vogel equation is used directly.
+* For undersaturated reservoirs, the model combines a linear Darcy-flow region above the bubble point with the Vogel equation below the bubble point.
+
+Flow Efficiency (FE) is included to represent the effect of near-wellbore damage on productivity.
+
+
+## VLP Model
+
+The VLP curve is calculated using the **Poettmann–Carpenter correlation**.
+
+Instead of assuming constant fluid properties throughout the well, the pressure is calculated step by step along the tubing. At each step, the model updates important fluid properties such as:
+
+* Solution Gas–Oil Ratio (Rs)
+* Oil Formation Volume Factor (Bo)
+* Gas Compressibility Factor (Z)
+* Gas Formation Volume Factor (Bg)
+* Mixture Density
+
+Updating these properties helps capture how the fluid changes as pressure decreases from the bottom of the well to the surface.
+
+
+## Operating Point
+
+After generating the IPR and VLP curves, the calculated points are interpolated using **SciPy's cubic spline interpolation**. The operating point is then obtained using **`scipy.optimize.fsolve`**, which finds the pressure where the two curves intersect.
+
+
+## Sensitivity Studies
+
+The notebook includes a few common production engineering cases:
+
+* Effect of removing skin damage (well stimulation)
+* Effect of tubing diameter on production
+* Effect of changing wellhead pressure
+* Selection of an optimum tubing size based on production improvement
+
+
+## Sample Well
+
+The example well uses the following data:
+
+* Reservoir Pressure: 3000 psi
+* Bubble Point Pressure: 2130 psi
+* Well Depth: 5000 ft
+* Tubing ID: 2.441 in
+* API Gravity: 35°
+* GLR: 273 scf/STB
+* Wellhead Pressure: 100 psi
+
+For this case, the calculated operating point is approximately:
+
+* Production Rate: **940 STB/day**
+* Bottomhole Flowing Pressure: **600 psi**
+
+
+## Observation
+
+One interesting result was observed while testing very small tubing sizes. At higher production rates, the VLP curve was no longer a simple decreasing curve. Friction losses increased rapidly, causing the curve to bend back and creating the possibility of multiple intersections with the IPR curve.
+
+This is something that should be considered when selecting the operating point and could be improved further in future versions of the project.
+
+
+## Technologies Used
+
+* Python
+* NumPy
+* SciPy
+* Pandas
+* Matplotlib
+* Jupyter Notebook
 
 ## Files
 
@@ -31,12 +109,16 @@ They're chained together using `%run`, so `IPR.ipynb` feeds into `VLP.ipynb`, wh
 
 (Heads up — `all_plots.ipynb` also tries to `%run Pwf_eff.ipynb` which I hadn't finished/uploaded here, so if you run it as-is that line will throw a file-not-found. Just comment it out, doesn't affect the rest.)
 
-## Inputs I used (base case)
+## Future Improvements
 
-- Pwh = 100 psi, T = 150°F, tubing ID = 2.441 in
-- API = 35°, GLR = 273 scf/STB
-- Yg = 0.75, Yo = 0.55, Yw = 1.05
-- Depth = 5000 ft
-- Pr = 3000 psi, Pb = 2130 psi, test point: Qo = 250 STB/d @ Pwf = 2500 psi
-- Skin pressure drop from DST = 200 psi
-.
+* Include water-cut sensitivity analysis.
+* Compare results with additional multiphase flow correlations.
+* Improve the tubing optimization routine by checking for stable operating points.
+* Export pressure traverse calculations to CSV.
+
+
+## Autho
+
+**Divyansh Guptar**
+B.Tech, Petroleum Engineering
+IIT (ISM) Dhanbad
