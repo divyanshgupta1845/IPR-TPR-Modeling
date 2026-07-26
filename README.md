@@ -117,7 +117,7 @@ They're chained together using `%run`, so `IPR.ipynb` feeds into `VLP.ipynb`, wh
 * Export pressure traverse calculations to CSV.
 
 
-## Autho
+## Author
 
 **Divyansh Guptar**
 B.Tech, Petroleum Engineering
