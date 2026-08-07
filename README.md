@@ -102,6 +102,7 @@ This is something that should be considered when selecting the operating point a
 | `Interpolation.ipynb` | spline fit for both curves + the intersection solver + base case plot |
 | `skin_effect.ipynb` | sensitivity of operating point to skin/drawdown |
 | `tubing_effect.ipynb` | sensitivity of operating point to tubing ID |
+| `Pwf_eff.ipynb` | sensitivity of operating point to wellhead pressure |
 | `diff_API_tubing.ipynb` | loops over a range of tubing sizes to find the optimum tubing size |
 | `all_plots.ipynb` | just runs all the notebooks together in one place |
 
